@@ -1,0 +1,8 @@
+flask==2.0.3
+flask-cors==3.0.10
+pandas==1.5.3
+numpy==1.23.5
+scikit-learn==1.2.2
+hmmlearn==0.3.0
+openpyxl==3.1.2
+python-dotenv==1.0.0
