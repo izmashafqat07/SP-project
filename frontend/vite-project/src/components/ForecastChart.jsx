@@ -12,7 +12,6 @@ import {
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 
-// Register Chart.js components
 ChartJS.register(TimeScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function ForecastChart({ data, company }) {

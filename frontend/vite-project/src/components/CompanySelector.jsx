@@ -3,7 +3,10 @@ import React from 'react';
 export default function CompanySelector({ selected, onChange }) {
   const companies = [
     { value: 'GOOGL', label: 'Google' },
-    { value: 'AAPL', label: 'Apple' }
+    { value: 'AAPL', label: 'Apple' },
+    { value: 'META', label: 'Meta' },
+    { value: 'MSFT', label: 'Microsoft' },
+    { value: 'AMZN', label: 'Amazon' }
   ];
   return (
     <select 

@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useState } from 'react';
 import CompanySelector from './components/CompanySelector';
 import AnalyticsDashboard from './components/AnalyticsDashboard';

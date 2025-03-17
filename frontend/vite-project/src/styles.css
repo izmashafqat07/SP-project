@@ -42,3 +42,20 @@ button:hover {
   border-radius: 8px;
   background: #f9f9f9;
 }
+
+.transition-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.transition-matrix-table th,
+.transition-matrix-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.transition-matrix-table th {
+  background-color: #f2f2f2;
+}

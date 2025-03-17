@@ -1,3 +1,4 @@
+# models/linear_regression.py
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
@@ -22,17 +23,14 @@ class LinearRegressionModel:
 
     def run_linear_regression(self):
         X = self.df[['Open', 'High', 'Low', 'Adj Close', 'Volume']]
-        y = self.df['close']
+        y = self.df['Close']
         self.model = LinearRegression()
         self.model.fit(X, y)
         self.df['Predicted_Close'] = self.model.predict(X)
 
-    def train(self):
-        pass
-
     def evaluate(self):
         X = self.df[['Open', 'High', 'Low', 'Adj Close', 'Volume']]
-        y_true = self.df['close']
+        y_true = self.df['Close']
         y_pred = self.df['Predicted_Close']
         mse = mean_squared_error(y_true, y_pred)
         r2 = r2_score(y_true, y_pred)
