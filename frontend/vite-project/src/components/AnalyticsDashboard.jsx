@@ -347,22 +347,28 @@ export default function AnalyticsDashboard({ ticker }) {
     }
   };
 
-  // Render a details section with an improved card UI for better presentation
+  // Render a details section with more explanation for new users
   const renderAnalyticsDetails = () => {
     if (selectedGraph === 'transition' && transitionData) {
       return (
         <div className="details-card">
           <h3 className="details-title">Transition Matrix Details</h3>
           <ul className="details-list">
-            <li>➤ Shows probability of transitioning between states.</li>
-            <li>➤ Rows represent current state; columns represent next state.</li>
             <li>
-              ➤ Average log returns per state:
-              {transitionData.state_means.map((mean, idx) => (
-                <ul key={idx} className="sub-list">
-                  <li>{transitionData.state_labels ? transitionData.state_labels[idx] : `State ${idx}`}: {mean.toFixed(4)}</li>
-                </ul>
-              ))}
+              <strong>What is it?</strong> This table and chart show the probability of transitioning between various states. Each row represents the current state and each column represents the next state.
+            </li>
+            <li>
+              <strong>How to read it:</strong> The percentages indicate the likelihood (converted from a fraction) that if the process is in a given state, it will move to another state.
+            </li>
+            <li>
+              <strong>State Metrics:</strong> Below the table, you can also see the average log returns per state which help in understanding the performance or risk associated with each state.
+              <ul className="sub-list">
+                {transitionData.state_means.map((mean, idx) => (
+                  <li key={idx}>
+                    {transitionData.state_labels ? transitionData.state_labels[idx] : `State ${idx}`}: {mean.toFixed(4)}
+                  </li>
+                ))}
+              </ul>
             </li>
           </ul>
         </div>
@@ -374,9 +380,15 @@ export default function AnalyticsDashboard({ ticker }) {
             <div className="details-card">
               <h3 className="details-title">Forecast Details</h3>
               <ul className="details-list">
-                <li>➤ Uses linear regression with Markov chain adjustments.</li>
-                <li>➤ Projects future prices for a 10-year period.</li>
-                <li>➤ Provides model evaluation metrics.</li>
+                <li>
+                  <strong>Model:</strong> Uses linear regression adjusted with a Markov chain model to forecast future stock prices over a 10-year period.
+                </li>
+                <li>
+                  <strong>Interpretation:</strong> The forecast graph shows the predicted price trend. The filled area below the line indicates the model's confidence range.
+                </li>
+                <li>
+                  <strong>Metrics:</strong> The details include evaluation metrics such as Mean Squared Error (MSE) and R² which indicate model accuracy.
+                </li>
                 {modelDetails && (
                   <>
                     <li>➤ Regression Equation: <strong>{modelDetails.equation}</strong></li>
@@ -392,9 +404,15 @@ export default function AnalyticsDashboard({ ticker }) {
             <div className="details-card">
               <h3 className="details-title">Volatility Details</h3>
               <ul className="details-list">
-                <li>➤ Annualized volatility from log returns.</li>
-                <li>➤ Calculated using a rolling window &amp; √252 multiplier.</li>
-                <li>➤ Helps identify periods of high fluctuation.</li>
+                <li>
+                  <strong>What is Volatility?</strong> Volatility measures how much the price of an asset fluctuates over time.
+                </li>
+                <li>
+                  <strong>Calculation:</strong> It is derived from the log returns and annualized using a rolling window and the √252 multiplier.
+                </li>
+                <li>
+                  <strong>Usage:</strong> This graph helps identify periods of high fluctuation, indicating potential risk.
+                </li>
               </ul>
             </div>
           );
@@ -403,9 +421,15 @@ export default function AnalyticsDashboard({ ticker }) {
             <div className="details-card">
               <h3 className="details-title">Moving Averages Details</h3>
               <ul className="details-list">
-                <li>➤ Compares Simple (SMA) and Exponential (EMA) Moving Averages.</li>
-                <li>➤ SMA gives equal weight; EMA emphasizes recent data.</li>
-                <li>➤ Useful for trend detection and smoothing fluctuations.</li>
+                <li>
+                  <strong>SMA vs EMA:</strong> The Simple Moving Average (SMA) calculates the average price over a period, while the Exponential Moving Average (EMA) gives more weight to recent data.
+                </li>
+                <li>
+                  <strong>Interpretation:</strong> These lines help smooth out price data to identify trends and potential reversal points.
+                </li>
+                <li>
+                  <strong>Usage:</strong> A crossover between SMA and EMA might signal changes in market trends.
+                </li>
               </ul>
             </div>
           );
@@ -414,9 +438,15 @@ export default function AnalyticsDashboard({ ticker }) {
             <div className="details-card">
               <h3 className="details-title">Bollinger Bands Details</h3>
               <ul className="details-list">
-                <li>➤ Calculated as a moving average ± (std. deviation × factor).</li>
-                <li>➤ Indicates potential overbought/oversold conditions.</li>
-                <li>➤ Useful to gauge market volatility.</li>
+                <li>
+                  <strong>Concept:</strong> Bollinger Bands consist of a moving average (usually 20-day SMA) and two bands set at a specified number of standard deviations above and below the moving average.
+                </li>
+                <li>
+                  <strong>Interpretation:</strong> They indicate potential overbought or oversold conditions. When prices touch the upper band, the asset might be overbought; when they touch the lower band, it might be oversold.
+                </li>
+                <li>
+                  <strong>Usage:</strong> Traders use these bands to identify volatility and potential price reversals.
+                </li>
               </ul>
             </div>
           );
@@ -425,9 +455,15 @@ export default function AnalyticsDashboard({ ticker }) {
             <div className="details-card">
               <h3 className="details-title">MACD Details</h3>
               <ul className="details-list">
-                <li>➤ Difference between two EMAs.</li>
-                <li>➤ Signal line (EMA of MACD) indicates momentum shifts.</li>
-                <li>➤ Helps identify trend reversals.</li>
+                <li>
+                  <strong>What is MACD?</strong> MACD (Moving Average Convergence Divergence) is a momentum indicator calculated as the difference between two exponential moving averages.
+                </li>
+                <li>
+                  <strong>Signal Line:</strong> An additional EMA (signal line) of the MACD helps in identifying momentum shifts.
+                </li>
+                <li>
+                  <strong>Interpretation:</strong> Crossovers between the MACD and its signal line can indicate potential trend reversals.
+                </li>
               </ul>
             </div>
           );
