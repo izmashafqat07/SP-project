@@ -1,0 +1,95 @@
+/* src/pages/DatasetsPage.css */
+.page {
+    padding: 20px;
+    background: #f4f7f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+  }
+  
+  .company-dataset {
+    background: #fff;
+    margin: 20px auto;
+    max-width: 1000px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .company-dataset h2 {
+    margin-bottom: 15px;
+    font-size: 1.75rem;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+  }
+  
+  .company-dataset-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .dataset-table-container {
+    width: 100%;
+  }
+  
+  .dataset-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* Force columns to share available width */
+  }
+  
+  .dataset-table th,
+  .dataset-table td {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+    white-space: normal;       /* Allow wrapping */
+    word-wrap: break-word;     /* Break long words if needed */
+    font-size: 0.95rem;
+  }
+  
+  .dataset-table th {
+    background: #007bff;
+    color: #fff;
+    font-weight: bold;
+  }
+  
+  .dataset-table tr:hover {
+    background-color: #f9f9f9;
+  }
+  
+  .dataset-details {
+    background: #f1f1f1;
+    border-radius: 8px;
+    padding: 15px;
+  }
+  
+  .dataset-details h3 {
+    font-size: 1.25rem;
+    margin-bottom: 15px;
+    color: #007bff;
+  }
+  
+  .dataset-details ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  
+  .dataset-details li {
+    margin-bottom: 10px;
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.4;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .dataset-table th,
+    .dataset-table td {
+      padding: 4px 6px;
+      font-size: 0.85rem;
+    }
+  }
+  
