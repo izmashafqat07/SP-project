@@ -28,7 +28,7 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       <h1>Dashboard</h1>
-      <div className="company-selector-container">
+      <div className="controls-container">
         <CompanySelector 
           selected={selectedCompany} 
           onChange={(val) => {
@@ -37,9 +37,9 @@ export default function DashboardPage() {
           }} 
         />
         <button 
+          className="run-model-button"
           onClick={runModel} 
           disabled={loading}
-          className="run-model-button"
         >
           {loading ? 'Running Model...' : 'Run Model'}
         </button>

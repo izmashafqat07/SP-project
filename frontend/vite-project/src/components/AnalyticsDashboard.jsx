@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './AnalyticsDashboard.css';
 import { Line, Bar } from 'react-chartjs-2';
 import "chartjs-adapter-date-fns";
 import {

@@ -1,36 +1,56 @@
 .dashboard-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-  }
-  
-  .dashboard-page h1 {
-    font-weight: 100;
-    margin-top: 10px; /* ہیڈنگ اور باقی عناصر کے درمیان فاصلہ */
-    color: brown;
-    background-color: yellow !important;
-  }
-  
-  .company-selector-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: yellow;
-    height: 500px;
-    width: 500px;
-    gap: 10px; /* کمپنی سیلیکٹر اور بٹن کے درمیان فاصلہ */
-    margin-bottom: -100px;
-    border: 2px solid red;
-  }
-  .run-model-button{
-    width: 200px;
-    border: 2px solid red;
-  }
-  .company-selector,
-  .run-model-button {
-    padding: 10px;
-    font-size: 16px;
-  }
-  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: white;
+}
+
+.dashboard-page h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #ffcc00;
+}
+
+.controls-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Ensuring dropdown and button have identical size */
+.company-selector select {
+  padding: 10px 15px; /* Adjusting padding */
+  font-size: 16px;
+  height: 44px; /* Ensuring same height as button */
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: white;
+  color: black;
+  cursor: pointer;
+  appearance: none; /* To remove default dropdown arrow in some browsers */
+}
+
+.run-model-button {
+  padding: 10px 15px; /* Matching button padding with select */
+  font-size: 16px;
+  height: 44px; /* Same height */
+  background-color: #00ff55;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.run-model-button:hover {
+  background-color: #00cc44;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
