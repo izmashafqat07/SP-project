@@ -1,7 +1,7 @@
-// src/pages/DashboardPage.jsx
 import React, { useState } from 'react';
 import CompanySelector from '../components/CompanySelector';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
+import './DashboardPage.css';
 
 export default function DashboardPage() {
   const [selectedCompany, setSelectedCompany] = useState('GOOGL');
@@ -28,16 +28,22 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       <h1>Dashboard</h1>
-      <CompanySelector 
-        selected={selectedCompany} 
-        onChange={(val) => {
-          setSelectedCompany(val);
-          setModelInitialized(false);
-        }} 
-      />
-      <button onClick={runModel} disabled={loading}>
-        {loading ? 'Running Model...' : 'Run Model'}
-      </button>
+      <div className="company-selector-container">
+        <CompanySelector 
+          selected={selectedCompany} 
+          onChange={(val) => {
+            setSelectedCompany(val);
+            setModelInitialized(false);
+          }} 
+        />
+        <button 
+          onClick={runModel} 
+          disabled={loading}
+          className="run-model-button"
+        >
+          {loading ? 'Running Model...' : 'Run Model'}
+        </button>
+      </div>
       {initError && <div className="error">{initError}</div>}
       {modelInitialized && <AnalyticsDashboard ticker={selectedCompany} />}
     </div>
