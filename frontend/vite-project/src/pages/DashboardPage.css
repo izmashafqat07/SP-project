@@ -37,8 +37,8 @@
 
 .run-model-button {
   padding: 10px 15px; /* Matching button padding with select */
-  font-size: 16px;
-  height: 44px; /* Same height */
+  font-size: 14px;
+  height: 40px; /* Same height */
   background-color: #00ff55;
   border: none;
   border-radius: 5px;

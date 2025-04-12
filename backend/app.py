@@ -1,5 +1,4 @@
-# app.py
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import traceback
 import numpy as np
@@ -20,7 +19,6 @@ def init_model(ticker):
     if ticker not in COMPANIES:
         return jsonify({"error": "Company not found"}), 404
     try:
-        # Use existing model if already initialized
         if ticker in models:
             lr_model = models[ticker]['lr']
             return jsonify({
@@ -52,6 +50,8 @@ def get_forecast(ticker, years):
     ticker = ticker.upper()
     if ticker not in models:
         return jsonify({"error": "First initialize model"}), 400
+    if years not in [5, 10]:
+        return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
         forecast = models[ticker]['markov'].forecast(years)
         return jsonify({
@@ -62,45 +62,26 @@ def get_forecast(ticker, years):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/graph/combined/<ticker>/<int:years>', methods=['GET'])
-def combined_forecast(ticker, years):
-    ticker = ticker.upper()
-    if ticker not in models:
-        return jsonify({"error": "Model not initialized"}), 400
-    try:
-        df_actual = models[ticker]['lr'].df.copy()
-        df_actual.index = pd.to_datetime(df_actual.index, errors='coerce')
-        df_actual_yearly = df_actual.resample('Y').last()
-        actual_dates = df_actual_yearly.index.strftime('%Y').tolist()
-        actual_prices = df_actual_yearly['Predicted_Close'].round(2).tolist()
-        
-        forecast_df = models[ticker]['markov'].forecast(years)
-        forecast_dates = forecast_df.index.strftime('%Y').tolist()
-        forecast_prices = forecast_df['Price'].round(2).tolist()
-        
-        return jsonify({
-            "actual_dates": actual_dates,
-            "actual_prices": actual_prices,
-            "forecast_dates": forecast_dates,
-            "forecast_prices": forecast_prices,
-            "color": models[ticker]['config']['color']
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 @app.route('/api/graph/volatility/<ticker>/<int:years>', methods=['GET'])
 def forecast_volatility(ticker, years):
     ticker = ticker.upper()
     if ticker not in models:
         return jsonify({"error": "Model not initialized"}), 400
+    if years not in [5, 10]:
+        return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
-        forecast_df = models[ticker]['markov'].forecast(years)
-        forecast_df['returns'] = np.log(forecast_df['Price']).diff()
-        forecast_df['volatility'] = forecast_df['returns'].rolling(window=2).std() * np.sqrt(252)
-        forecast_df = forecast_df.dropna(subset=['volatility'])
-        dates = forecast_df.index.strftime('%Y').tolist()
-        volatility = forecast_df['volatility'].round(4).tolist()
-        return jsonify({"dates": dates, "volatility": volatility, "color": models[ticker]['config']['color']})
+        period = request.args.get('period', 'short')
+        # Ensure correct forecast duration based on period
+        forecast_years = 5 if period == 'short' else 10
+        forecast_df = models[ticker]['markov'].forecast(forecast_years)
+        volatility_df = models[ticker]['markov'].calculate_volatility(forecast_df, period)
+        dates = volatility_df.index.strftime('%Y').tolist()
+        volatility = volatility_df['volatility'].tolist()
+        return jsonify({
+            "dates": dates,
+            "volatility": volatility,
+            "color": models[ticker]['config']['color']
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -109,15 +90,21 @@ def forecast_movingavg(ticker, years):
     ticker = ticker.upper()
     if ticker not in models:
         return jsonify({"error": "Model not initialized"}), 400
+    if years not in [5, 10]:
+        return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
+        window = int(request.args.get('window', 2))
         forecast_df = models[ticker]['markov'].forecast(years)
-        forecast_df['SMA_30'] = forecast_df['Price'].rolling(window=2).mean()
-        forecast_df['EMA_30'] = forecast_df['Price'].ewm(span=2, adjust=False).mean()
-        forecast_df = forecast_df.dropna(subset=['SMA_30', 'EMA_30'])
-        dates = forecast_df.index.strftime('%Y').tolist()
-        sma = forecast_df['SMA_30'].round(2).tolist()
-        ema = forecast_df['EMA_30'].round(2).tolist()
-        return jsonify({"dates": dates, "sma": sma, "ema": ema, "color": models[ticker]['config']['color']})
+        moving_avg_df = models[ticker]['markov'].calculate_moving_average(forecast_df, window)
+        dates = moving_avg_df.index.strftime('%Y').tolist()
+        sma = moving_avg_df[f'SMA_{window}'].tolist()
+        ema = moving_avg_df[f'EMA_{window}'].tolist()
+        return jsonify({
+            "dates": dates,
+            "sma": sma,
+            "ema": ema,
+            "color": models[ticker]['config']['color']
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -126,18 +113,26 @@ def forecast_bollinger(ticker, years):
     ticker = ticker.upper()
     if ticker not in models:
         return jsonify({"error": "Model not initialized"}), 400
+    if years not in [5, 10]:
+        return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
-        forecast_df = models[ticker]['markov'].forecast(years)
-        forecast_df['SMA_20'] = forecast_df['Price'].rolling(window=2).mean()
-        forecast_df['std'] = forecast_df['Price'].rolling(window=2).std()
-        forecast_df['upper_band'] = forecast_df['SMA_20'] + 2 * forecast_df['std']
-        forecast_df['lower_band'] = forecast_df['SMA_20'] - 2 * forecast_df['std']
-        forecast_df = forecast_df.dropna(subset=['SMA_20', 'upper_band', 'lower_band'])
-        dates = forecast_df.index.strftime('%Y').tolist()
-        sma = forecast_df['SMA_20'].round(2).tolist()
-        upper = forecast_df['upper_band'].round(2).tolist()
-        lower = forecast_df['lower_band'].round(2).tolist()
-        return jsonify({"dates": dates, "sma": sma, "upper": upper, "lower": lower, "color": models[ticker]['config']['color']})
+        window = int(request.args.get('window', 2))
+        sd = float(request.args.get('sd', 2))
+        # Ensure forecast duration is used for bollinger bands calculations
+        forecast_years = 5 if years <= 5 else 10
+        forecast_df = models[ticker]['markov'].forecast(forecast_years)
+        bollinger_df = models[ticker]['markov'].calculate_bollinger_bands(forecast_df, window, sd)
+        dates = bollinger_df.index.strftime('%Y').tolist()
+        sma = bollinger_df[f'SMA_{window}'].tolist()
+        upper = bollinger_df['upper_band'].tolist()
+        lower = bollinger_df['lower_band'].tolist()
+        return jsonify({
+            "dates": dates,
+            "sma": sma,
+            "upper": upper,
+            "lower": lower,
+            "color": models[ticker]['config']['color']
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -146,39 +141,22 @@ def forecast_macd(ticker, years):
     ticker = ticker.upper()
     if ticker not in models:
         return jsonify({"error": "Model not initialized"}), 400
+    if years not in [5, 10]:
+        return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
+        fast_period = int(request.args.get('fast_period', 2))
+        slow_period = int(request.args.get('slow_period', 4))
         forecast_df = models[ticker]['markov'].forecast(years)
-        forecast_df['EMA12'] = forecast_df['Price'].ewm(span=2, adjust=False).mean()
-        forecast_df['EMA26'] = forecast_df['Price'].ewm(span=4, adjust=False).mean()
-        forecast_df['MACD'] = forecast_df['EMA12'] - forecast_df['EMA26']
-        forecast_df['Signal'] = forecast_df['MACD'].ewm(span=2, adjust=False).mean()
-        forecast_df = forecast_df.dropna(subset=['MACD', 'Signal'])
-        dates = forecast_df.index.strftime('%Y').tolist()
-        macd = forecast_df['MACD'].round(4).tolist()
-        signal = forecast_df['Signal'].round(4).tolist()
-        return jsonify({"dates": dates, "macd": macd, "signal": signal, "color": models[ticker]['config']['color']})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/graph/rsi/<ticker>/<int:years>', methods=['GET'])
-def forecast_rsi(ticker, years):
-    ticker = ticker.upper()
-    if ticker not in models:
-        return jsonify({"error": "Model not initialized"}), 400
-    try:
-        forecast_df = models[ticker]['markov'].forecast(years)
-        forecast_df['delta'] = forecast_df['Price'].diff()
-        forecast_df['gain'] = forecast_df['delta'].apply(lambda x: x if x > 0 else 0)
-        forecast_df['loss'] = forecast_df['delta'].apply(lambda x: -x if x < 0 else 0)
-        period = 2
-        forecast_df['avg_gain'] = forecast_df['gain'].rolling(window=period).mean()
-        forecast_df['avg_loss'] = forecast_df['loss'].rolling(window=period).mean()
-        forecast_df['rs'] = forecast_df['avg_gain'] / forecast_df['avg_loss']
-        forecast_df['rsi'] = 100 - (100 / (1 + forecast_df['rs']))
-        forecast_df = forecast_df.dropna(subset=['rsi'])
-        dates = forecast_df.index.strftime('%Y').tolist()
-        rsi = forecast_df['rsi'].round(2).tolist()
-        return jsonify({"dates": dates, "rsi": rsi, "color": models[ticker]['config']['color']})
+        macd_df = models[ticker]['markov'].calculate_macd(forecast_df, fast_period, slow_period)
+        dates = macd_df.index.strftime('%Y').tolist()
+        macd = macd_df['MACD'].tolist()
+        signal = macd_df['Signal'].tolist()
+        return jsonify({
+            "dates": dates,
+            "macd": macd,
+            "signal": signal,
+            "color": models[ticker]['config']['color']
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

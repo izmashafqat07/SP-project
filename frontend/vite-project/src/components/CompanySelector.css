@@ -1,0 +1,6 @@
+.company-selector-container select{
+    /* background-color: aquamarine; */
+    height: 40px;
+    /* padding: 10px 15px; */
+    text-align: center;
+}
