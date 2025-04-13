@@ -12,30 +12,58 @@
   font-size: 2.5rem;
   color: #111827;
   margin-bottom: 10px;
+  animation: slideDown 1s ease-out;
 }
 
 .homepage-subtitle {
   font-size: 1.2rem;
   color: #6b7280;
   margin-bottom: 30px;
+  animation: slideDown 1s ease-out;
 }
 
+.prediction-container {
+  margin: 20px auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prediction-container h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.prediction-text {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* Grid Layout for Company Cards */
 .card-grid {
   display: flex;
-  justify-content: space-around; /* Ensures the cards are evenly spaced */
-  align-items: flex-start; /* Aligns cards to the top of the container */
+  justify-content: space-around;
+  align-items: flex-start;
   gap: 20px;
-  flex-wrap: wrap; /* Allows wrapping if the screen size is small */
+  flex-wrap: wrap;
 }
 
+/* Company Card Styles */
 .company-card {
   background-color: white;
   padding: 20px;
-  width: 200px; /* Adjust width for consistency */
+  width: 200px;
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s, box-shadow 0.3s;
   animation: slideUp 0.6s ease forwards;
+  position: relative;
+  overflow: hidden;
 }
 
 .company-card h3 {
@@ -48,24 +76,55 @@
   color: #4b5563;
 }
 
+/* Hover Effects */
 .company-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
 }
 
+/* Logo Styling */
 .company-logo {
-  width: 100px; /* Fixed logo size */
-  height: 100px; /* Fixed logo size */
-  object-fit: contain; /* Ensures the logo maintains its aspect ratio */
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  transition: transform 0.3s;
 }
 
-/* Animations */
+.company-card:hover .company-logo {
+  transform: scale(1.1);
+}
+
+/* Prediction Animation */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+/* Transition Animations */
+@keyframes borderAnimation {
+  0% { border-color: transparent; }
+  100% { border-color: #4285F4; }
+}
+
+/* Add hover animation for border */
+.company-card .border-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  animation: borderAnimation 0.6s ease-out infinite;
 }

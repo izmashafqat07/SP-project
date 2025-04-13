@@ -615,4 +615,3 @@ This graph shows the annualized volatility over the forecasted ${forecastDuratio
         </div>
     );
 }
-

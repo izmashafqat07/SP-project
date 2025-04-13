@@ -10,7 +10,9 @@ function AppRoutes() {
   return (
     <Router>
       <nav className="navbar">
-        <div className="navbar-brand">MarketMinds</div>
+      <div className="navbar-brand">
+          MarketMinds 📈
+        </div>
         <div className="navbar-links">
           <Link to="/">Home</Link>
           <Link to="/dashboard">Dashboard</Link>

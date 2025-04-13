@@ -33,7 +33,13 @@ export default function HomePage() {
   return (
     <div className="homepage-container">
       <h1 className="homepage-title">Welcome to MarketMinds</h1>
-      <p className="homepage-subtitle">Emphasizes intelligence in understanding market behaviors</p>
+      <p className="homepage-subtitle">Emphasizing intelligence in understanding market behaviors</p>
+
+      {/* Add interactive prediction feature */}
+      <div className="prediction-container">
+        <h2>Predicting Stock Trends of Your Favorite Companies</h2>
+        <p className="prediction-text">Get predictions and insights into stock movements for top companies like Google, Apple, Meta, and more.</p>
+      </div>
 
       <div className="card-grid">
         {companies.map((company, index) => (
@@ -41,7 +47,8 @@ export default function HomePage() {
             <div className="border-animation"></div>
             <img src={company.logo} alt={`${company.name} logo`} className="company-logo" />
             <h3 style={{ color: company.color }}>{company.name}</h3>
-           
+            {/* Add company-specific prediction description */}
+            <p className="company-prediction">Prediction available for {company.name}'s stock trends</p>
           </div>
         ))}
       </div>
