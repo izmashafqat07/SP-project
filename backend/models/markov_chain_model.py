@@ -5,27 +5,19 @@ class MarkovChainForecaster:
     def __init__(self, lr_model, n_states=3):
         self.lr_model = lr_model
         self.n_states = n_states
-        self.data = None          # Array of log returns
-        self.states = None         # Discrete states assigned to each log return
-        self.transition_matrix = None # The transition probability matrix
-        self.state_means = None     # Mean log return per state
-        self.cached_forecasts = {}    # Cache forecasts by 'years'
+        self.data = None
+        self.states = None
+        self.transition_matrix = None
+        self.state_means = None
+        self.cached_forecasts = {}
 
     def prepare_data(self):
-        # Note: Do NOT reset self.cached_forecasts here.
-        # This allows the forecast cache to persist across multiple requests.
         log_returns = np.log(self.lr_model.df['Predicted_Close']).diff().dropna().values
         self.data = log_returns
-        quantiles = np.percentile(
-            log_returns, [100 * i / self.n_states for i in range(1, self.n_states)]
-        )
+        quantiles = np.percentile(log_returns, [100 * i / self.n_states for i in range(1, self.n_states)])
         self.states = np.digitize(log_returns, bins=quantiles)
         self.compute_transition_matrix()
         self.compute_state_means()
-        
-        # Debug prints (optional)
-        print("State Means:", self.state_means)
-        print("Transition Matrix:", self.transition_matrix)
 
     def compute_transition_matrix(self):
         matrix = np.zeros((self.n_states, self.n_states))
@@ -51,7 +43,6 @@ class MarkovChainForecaster:
         self.state_means = means
 
     def forecast(self, years):
-        # Return cached forecast if available
         if years in self.cached_forecasts:
             forecast_df = self.cached_forecasts.get(years)
             if forecast_df is not None:
@@ -62,7 +53,6 @@ class MarkovChainForecaster:
         return forecast_df
 
     def _generate_forecast(self, years):
-        """Generates the base price forecast."""
         last_price = self.lr_model.df['Predicted_Close'].iloc[-1]
         current_state = self.states[-1]
         predicted_log_returns = []
@@ -77,37 +67,46 @@ class MarkovChainForecaster:
             cumulative_return += r
             future_prices.append(last_price * np.exp(cumulative_return))
 
-        last_known_date = pd.to_datetime(self.lr_model.df.index[-1])
-        future_start = pd.Timestamp(year=last_known_date.year + 1, month=1, day=1)
-        future_dates = pd.date_range(start=future_start, periods=years, freq='Y')
+        future_dates = pd.date_range(start='2026', periods=years, freq='Y')
         forecast_df = pd.DataFrame({"Price": future_prices}, index=future_dates)
         return forecast_df
 
-    def calculate_volatility(self, forecast_df, period='short'):
-        """Calculates volatility."""
+    def calculate_volatility(self, forecast_df):
+        forecast_df = forecast_df.copy()
         forecast_df['returns'] = np.log(forecast_df['Price']).diff()
-        window = 252 if period == 'long' else 5
-        forecast_df['volatility'] = forecast_df['returns'].rolling(window=window).std() * np.sqrt(252)
-        return forecast_df.dropna(subset=['volatility'])
+        forecast_df['volatility'] = (
+            forecast_df['returns'].rolling(window=2, min_periods=1).std(ddof=1) * np.sqrt(252)
+        )
+        forecast_df['volatility'].fillna(0, inplace=True)  # Fill early NaN
+        forecast_df = forecast_df[(forecast_df.index.year >= 2026) & (forecast_df.index.year <= 2035)]
+        return forecast_df
 
-    def calculate_moving_average(self, forecast_df, window=2):
-        """Calculates Simple Moving Average (SMA) and Exponential Moving Average (EMA)."""
-        forecast_df[f'SMA_{window}'] = forecast_df['Price'].rolling(window=window).mean()
+    def calculate_moving_average(self, forecast_df, window=5):
+        forecast_df = forecast_df.copy()
+        forecast_df[f'SMA_{window}'] = forecast_df['Price'].rolling(window=window, min_periods=1).mean()
         forecast_df[f'EMA_{window}'] = forecast_df['Price'].ewm(span=window, adjust=False).mean()
-        return forecast_df.dropna(subset=[f'SMA_{window}', f'EMA_{window}'])
+        forecast_df.fillna(method='bfill', inplace=True)  # Optional for completeness
+        return forecast_df
 
-    def calculate_bollinger_bands(self, forecast_df, window=2, sd=2):
-        """Calculates Bollinger Bands."""
-        forecast_df[f'SMA_{window}'] = forecast_df['Price'].rolling(window=window).mean()
-        forecast_df['std'] = forecast_df['Price'].rolling(window=window).std()
+    def calculate_bollinger_bands(self, forecast_df, window=5, sd=2):
+        forecast_df = forecast_df.copy()
+        forecast_df[f'SMA_{window}'] = forecast_df['Price'].rolling(window=window, min_periods=1).mean()
+        forecast_df['std'] = forecast_df['Price'].rolling(window=window, min_periods=1).std(ddof=1)
+        forecast_df['std'].fillna(0, inplace=True)
+
         forecast_df['upper_band'] = forecast_df[f'SMA_{window}'] + sd * forecast_df['std']
         forecast_df['lower_band'] = forecast_df[f'SMA_{window}'] - sd * forecast_df['std']
-        return forecast_df.dropna(subset=[f'SMA_{window}', 'upper_band', 'lower_band'])
+        forecast_df['upper_band'].fillna(method='bfill', inplace=True)
+        forecast_df['lower_band'].fillna(method='bfill', inplace=True)
 
-    def calculate_macd(self, forecast_df, fast_period=2, slow_period=4):
-        """Calculates MACD (Moving Average Convergence Divergence)."""
+        forecast_df = forecast_df[(forecast_df.index.year >= 2026) & (forecast_df.index.year <= 2035)]
+        return forecast_df
+
+    def calculate_macd(self, forecast_df, fast_period=12, slow_period=26):
+        forecast_df = forecast_df.copy()
         forecast_df[f'EMA{fast_period}'] = forecast_df['Price'].ewm(span=fast_period, adjust=False).mean()
         forecast_df[f'EMA{slow_period}'] = forecast_df['Price'].ewm(span=slow_period, adjust=False).mean()
         forecast_df['MACD'] = forecast_df[f'EMA{fast_period}'] - forecast_df[f'EMA{slow_period}']
-        forecast_df['Signal'] = forecast_df['MACD'].ewm(span=2, adjust=False).mean()
-        return forecast_df.dropna(subset=['MACD', 'Signal'])
+        forecast_df['Signal'] = forecast_df['MACD'].ewm(span=9, adjust=False).mean()
+        forecast_df.fillna(method='bfill', inplace=True)  # Optional: handle early rows
+        return forecast_df

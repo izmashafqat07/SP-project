@@ -1,8 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import traceback
-import numpy as np
-import pandas as pd
 
 from models.linear_regression import LinearRegressionModel
 from models.markov_chain_model import MarkovChainForecaster
@@ -44,7 +42,6 @@ def init_model(ticker):
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/api/forecast/<ticker>/<int:years>', methods=['GET'])
 def get_forecast(ticker, years):
     ticker = ticker.upper()
@@ -70,19 +67,15 @@ def forecast_volatility(ticker, years):
     if years not in [5, 10]:
         return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
-        period = request.args.get('period', 'short')
-        # Ensure correct forecast duration based on period
-        forecast_years = 5 if period == 'short' else 10
-        forecast_df = models[ticker]['markov'].forecast(forecast_years)
-        volatility_df = models[ticker]['markov'].calculate_volatility(forecast_df, period)
-        dates = volatility_df.index.strftime('%Y').tolist()
-        volatility = volatility_df['volatility'].tolist()
+        forecast_df = models[ticker]['markov'].forecast(years)
+        volatility_df = models[ticker]['markov'].calculate_volatility(forecast_df)
         return jsonify({
-            "dates": dates,
-            "volatility": volatility,
+            "dates": volatility_df.index.strftime('%Y').tolist(),
+            "volatility": volatility_df['volatility'].round(4).tolist(),
             "color": models[ticker]['config']['color']
         })
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/graph/movingavg/<ticker>/<int:years>', methods=['GET'])
@@ -93,19 +86,17 @@ def forecast_movingavg(ticker, years):
     if years not in [5, 10]:
         return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
-        window = int(request.args.get('window', 2))
+        window = int(request.args.get('window', 5))
         forecast_df = models[ticker]['markov'].forecast(years)
         moving_avg_df = models[ticker]['markov'].calculate_moving_average(forecast_df, window)
-        dates = moving_avg_df.index.strftime('%Y').tolist()
-        sma = moving_avg_df[f'SMA_{window}'].tolist()
-        ema = moving_avg_df[f'EMA_{window}'].tolist()
         return jsonify({
-            "dates": dates,
-            "sma": sma,
-            "ema": ema,
+            "dates": moving_avg_df.index.strftime('%Y').tolist(),
+            "sma": moving_avg_df[f'SMA_{window}'].round(2).tolist(),
+            "ema": moving_avg_df[f'EMA_{window}'].round(2).tolist(),
             "color": models[ticker]['config']['color']
         })
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/graph/bollinger/<ticker>/<int:years>', methods=['GET'])
@@ -116,24 +107,19 @@ def forecast_bollinger(ticker, years):
     if years not in [5, 10]:
         return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
-        window = int(request.args.get('window', 2))
+        window = int(request.args.get('window', 5))
         sd = float(request.args.get('sd', 2))
-        # Ensure forecast duration is used for bollinger bands calculations
-        forecast_years = 5 if years <= 5 else 10
-        forecast_df = models[ticker]['markov'].forecast(forecast_years)
+        forecast_df = models[ticker]['markov'].forecast(10)  # Always fetch 10 years for full range
         bollinger_df = models[ticker]['markov'].calculate_bollinger_bands(forecast_df, window, sd)
-        dates = bollinger_df.index.strftime('%Y').tolist()
-        sma = bollinger_df[f'SMA_{window}'].tolist()
-        upper = bollinger_df['upper_band'].tolist()
-        lower = bollinger_df['lower_band'].tolist()
         return jsonify({
-            "dates": dates,
-            "sma": sma,
-            "upper": upper,
-            "lower": lower,
+            "dates": bollinger_df.index.strftime('%Y').tolist(),
+            "sma": bollinger_df[f'SMA_{window}'].round(2).tolist(),
+            "upper": bollinger_df['upper_band'].round(2).tolist(),
+            "lower": bollinger_df['lower_band'].round(2).tolist(),
             "color": models[ticker]['config']['color']
         })
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/graph/macd/<ticker>/<int:years>', methods=['GET'])
@@ -144,20 +130,18 @@ def forecast_macd(ticker, years):
     if years not in [5, 10]:
         return jsonify({"error": "Invalid forecast duration. Choose 5 or 10 years."}), 400
     try:
-        fast_period = int(request.args.get('fast_period', 2))
-        slow_period = int(request.args.get('slow_period', 4))
+        fast_period = int(request.args.get('fast_period', 12))
+        slow_period = int(request.args.get('slow_period', 26))
         forecast_df = models[ticker]['markov'].forecast(years)
         macd_df = models[ticker]['markov'].calculate_macd(forecast_df, fast_period, slow_period)
-        dates = macd_df.index.strftime('%Y').tolist()
-        macd = macd_df['MACD'].tolist()
-        signal = macd_df['Signal'].tolist()
         return jsonify({
-            "dates": dates,
-            "macd": macd,
-            "signal": signal,
+            "dates": macd_df.index.strftime('%Y').tolist(),
+            "macd": macd_df['MACD'].round(4).tolist(),
+            "signal": macd_df['Signal'].round(4).tolist(),
             "color": models[ticker]['config']['color']
         })
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/transition_matrix/<ticker>', methods=['GET'])
@@ -176,6 +160,7 @@ def get_transition_matrix(ticker):
             "state_labels": state_labels
         })
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

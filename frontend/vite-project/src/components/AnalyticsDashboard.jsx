@@ -30,20 +30,20 @@ ChartJS.register(
 );
 
 const forecastDurations = [5, 10];
-const smoothingWindows = [2, 5];
-const volatilityPeriods = ['short', 'long'];
+const smoothingWindows = [2,5]; // Changed smoothing windows
+
 const simulationNumbers = [100, 500, 1000];
 const bollingerStandardDeviations = [1, 2, 3];
-const macdFastPeriods = [2, 6, 12];
-const macdSlowPeriods = [4, 12, 26];
+const macdFastPeriods = [12, 24, 36];    // Changed fast EMA periods
+const macdSlowPeriods = [26, 52, 78];    // Changed slow EMA periods
 
 const defaultForecastDuration = forecastDurations[0];
 const defaultSmoothingWindow = smoothingWindows[0];
-const defaultVolatilityPeriod = volatilityPeriods[0];
+// const defaultVolatilityPeriod = volatilityPeriods[0];
 const defaultNumSimulations = simulationNumbers[0];
 const defaultBollingerSD = bollingerStandardDeviations[1];
 const defaultFastEMA = macdFastPeriods[0];
-const defaultSlowEMA = macdSlowPeriods[1];
+const defaultSlowEMA = macdSlowPeriods[0];
 
 export default function AnalyticsDashboard({ ticker }) {
     const [selectedGraph, setSelectedGraph] = useState('forecast');
@@ -57,7 +57,7 @@ export default function AnalyticsDashboard({ ticker }) {
     // Customizable parameters state
     const [forecastDuration, setForecastDuration] = useState(defaultForecastDuration);
     const [smoothingWindow, setSmoothingWindow] = useState(defaultSmoothingWindow);
-    const [volatilityPeriod, setVolatilityPeriod] = useState(defaultVolatilityPeriod);
+    // const [volatilityPeriod, setVolatilityPeriod] = useState(defaultVolatilityPeriod);
     const [numSimulations, setNumSimulations] = useState(defaultNumSimulations);
     const [bollingerSD, setBollingerSD] = useState(defaultBollingerSD);
     const [fastEMA, setFastEMA] = useState(defaultFastEMA);
@@ -113,7 +113,8 @@ export default function AnalyticsDashboard({ ticker }) {
                         setChartData(data);
                         break;
                     case 'volatility':
-                        url = `http://localhost:5000/api/graph/volatility/${ticker}/${forecastDuration}?period=${volatilityPeriod}`;
+                        url = `http://localhost:5000/api/graph/volatility/${ticker}/${forecastDuration}`;
+
                         response = await fetch(url, { signal });
                         if (!response.ok) throw new Error('Error fetching volatility data');
                         data = await response.json();
@@ -162,7 +163,7 @@ export default function AnalyticsDashboard({ ticker }) {
 
         fetchData();
         return () => controller.abort();
-    }, [selectedGraph, ticker, initialized, forecastDuration, smoothingWindow, volatilityPeriod, bollingerSD, fastEMA, slowEMA]);
+    }, [selectedGraph, ticker, initialized, forecastDuration, smoothingWindow,bollingerSD, fastEMA, slowEMA]);
 
     const renderGraph = () => {
         if (selectedGraph === 'transition') {
@@ -193,29 +194,35 @@ export default function AnalyticsDashboard({ ticker }) {
                         }}
                     />
                 );
-            case 'volatility':
-                return (
-                    <Line
-                        data={{
-                            labels: chartData?.dates,
-                            datasets: [{
-                                label: 'Annualized Volatility',
-                                data: chartData?.volatility,
-                                borderColor: '#FF9900',
-                                backgroundColor: '#FF990033',
-                                borderDash: [5, 5],
-                                fill: false,
-                            }],
-                        }}
-                        options={{
-                            plugins: { title: { display: true, text: `Volatility (${volatilityPeriod === 'short' ? 'Short' : 'Long'} Term)` } },
-                            scales: {
-                                x: { type: 'time', time: { unit: 'year' }, title: { display: true, text: 'Year' } },
-                                y: { title: { display: true, text: 'Volatility' } }
-                            }
-                        }}
-                    />
-                );
+                case 'volatility':
+                    return (
+                        <Line
+                            data={{
+                                labels: chartData?.dates,
+                                datasets: [{
+                                    label: 'Annualized Volatility',
+                                    data: chartData?.volatility,
+                                    borderColor: '#FF9900',
+                                    backgroundColor: '#FF990033',
+                                    borderDash: [5, 5],
+                                    fill: false,
+                                }],
+                            }}
+                            options={{
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: `Volatility Forecast (${forecastDuration} Years)`
+                                    }
+                                },
+                                scales: {
+                                    x: { type: 'time', time: { unit: 'year' }, title: { display: true, text: 'Year' } },
+                                    y: { title: { display: true, text: 'Volatility' } }
+                                }
+                            }}
+                        />
+                    );
+                
             case 'movingavg':
                 return (
                     <Line
@@ -251,57 +258,57 @@ export default function AnalyticsDashboard({ ticker }) {
                         }}
                     />
                 );
-                case 'bollinger':
-                  return (
-                      <Line
-                          data={{
-                              labels: chartData?.dates,
-                              datasets: [
-                                  {
-                                      label: `SMA (${smoothingWindow})`,
-                                      data: chartData.sma,
-                                      borderColor: '#6a0dad',
-                                      backgroundColor: '#6a0dad33',
-                                      fill: false,
-                                  },
-                                  {
-                                      label: `Upper Band (${bollingerSD} SD)`,
-                                      data: chartData.upper,
-                                      borderColor: '#FF5733',
-                                      backgroundColor: '#FF573333',
-                                      fill: false,
-                                      borderDash: [8, 4],
-                                  },
-                                  {
-                                      label: `Lower Band (${bollingerSD} SD)`,
-                                      data: chartData.lower,
-                                      borderColor: '#28a745',
-                                      backgroundColor: '#28a74533',
-                                      fill: false,
-                                      borderDash: [8, 4],
-                                  }
-                              ],
-                          }}
-                          options={{
-                              plugins: { 
-                                  title: { 
-                                      display: true, 
-                                      text: `Bollinger Bands (Window: ${smoothingWindow}, SD: ${bollingerSD})` 
-                                  } 
-                              },
-                              scales: {
-                                  x: { 
-                                      type: 'time', 
-                                      time: { unit: 'year' }, 
-                                      title: { display: true, text: 'Year' } 
-                                  },
-                                  y: { 
-                                      title: { display: true, text: 'Price (USD)' } 
-                                  }
-                              }
-                          }}
-                      />
-                  );
+            case 'bollinger':
+                return (
+                    <Line
+                        data={{
+                            labels: chartData?.dates,
+                            datasets: [
+                                {
+                                    label: `SMA (${smoothingWindow})`,
+                                    data: chartData.sma,
+                                    borderColor: '#6a0dad',
+                                    backgroundColor: '#6a0dad33',
+                                    fill: false,
+                                },
+                                {
+                                    label: `Upper Band (${bollingerSD} SD)`,
+                                    data: chartData.upper,
+                                    borderColor: '#FF5733',
+                                    backgroundColor: '#FF573333',
+                                    fill: false,
+                                    borderDash: [8, 4],
+                                },
+                                {
+                                    label: `Lower Band (${bollingerSD} SD)`,
+                                    data: chartData.lower,
+                                    borderColor: '#28a745',
+                                    backgroundColor: '#28a74533',
+                                    fill: false,
+                                    borderDash: [8, 4],
+                                }
+                            ],
+                        }}
+                        options={{
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: `Bollinger Bands (Window: ${smoothingWindow}, SD: ${bollingerSD})`
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    type: 'time',
+                                    time: { unit: 'year' },
+                                    title: { display: true, text: 'Year' }
+                                },
+                                y: {
+                                    title: { display: true, text: 'Price (USD)' }
+                                }
+                            }
+                        }}
+                    />
+                );
             case 'macd':
                 return (
                     <Line
@@ -370,7 +377,7 @@ export default function AnalyticsDashboard({ ticker }) {
                         <tr key={i}>
                             <td>{transitionData.state_labels ? transitionData.state_labels[i] : `State ${i}`}</td>
                             {row.map((val, j) => (
-                                <td key={j}>{val.toFixed(4)}</td>  // Display probability
+                                <td key={j}>{val.toFixed(4)}</td> // Display probability
                             ))}
                         </tr>
                     ))}
@@ -436,7 +443,7 @@ export default function AnalyticsDashboard({ ticker }) {
             let title = "";
             switch (selectedGraph) {
                 case 'forecast':
-                    title = "Forecast Details";
+                    title= "Forecast Details";
                     details = `
                         The forecast graph shows the predicted price trend over ${forecastDuration} years.
                         The model uses linear regression adjusted with a Markov chain.
@@ -446,7 +453,8 @@ export default function AnalyticsDashboard({ ticker }) {
                     title = "Volatility Details";
                     details = `
                         Volatility measures how much the price of an asset fluctuates over time.
-                        This graph shows the annualized volatility based on ${volatilityPeriod === 'short' ? 'short-term' : 'long-term'} data.
+This graph shows the annualized volatility over the forecasted ${forecastDuration} years.
+
                     `;
                     break;
                 case 'movingavg':
@@ -524,16 +532,7 @@ export default function AnalyticsDashboard({ ticker }) {
                         </select>
                     </div>
                 )}
-                {selectedGraph === 'volatility' && (
-                    <div className="parameter-control">
-                        <label htmlFor="volatilityPeriod">Volatility Period:</label>
-                        <select id="volatilityPeriod" value={volatilityPeriod} onChange={(e) => setVolatilityPeriod(e.target.value)}>
-                            {volatilityPeriods.map(period => (
-                                <option key={period} value={period}>{period.charAt(0).toUpperCase() + period.slice(1)}-term</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+              
                 {selectedGraph === 'bollinger' && (
                     <div className="parameter-control">
                         <label htmlFor="bollingerSD">Bollinger SD:</label>
@@ -616,3 +615,4 @@ export default function AnalyticsDashboard({ ticker }) {
         </div>
     );
 }
+
